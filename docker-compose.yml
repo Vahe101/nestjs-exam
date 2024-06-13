@@ -1,0 +1,107 @@
+version: '3.9'
+services:
+  app:
+    build:
+      context: .
+    image: nestjs_exam
+    environment:
+      - APP_PORT=3000
+      - NODE_ENV=development
+      - REDIS_HOST=localhost
+      - REDIS_PORT=6379
+      - REDIS_DB=10
+      - REDIS_PRIFIX=guard
+      - REDIS_PASSWORD=password
+      - POSTGRES_HOST_FIRST=localhost
+      - POSTGRES_PORT_FIRST=5432
+      - POSTGRES_USER_FIRST=postgres
+      - POSTGRES_PASSWORD_FIRST=postgres
+      - POSTGRES_DB_FIRST=exam_db_1
+      - POSTGRES_HOST_SECOND=localhost
+      - POSTGRES_PORT_SECOND=5433
+      - POSTGRES_USER_SECOND=postgres
+      - POSTGRES_PASSWORD_SECOND=postgres
+      - POSTGRES_DB_SECOND=exam_db_2
+      - MONGODB_URL=mongodb://localhost:27017/exam_db
+      - API_KEY_TTL=300
+    ports:
+      - '3000:3000'
+    command: npm run start:dev
+    volumes:
+      - .:/app
+      - /app/node_modules
+    networks:
+      - exam_backend
+    depends_on:
+      - redis
+      - postgres_db1
+      - postgres_db2
+      - mongodb
+    restart: always
+
+  postgres_db1:
+    init: true
+    image: postgres:latest
+    container_name: nestjs_exam_postgres_db1
+    environment:
+      POSTGRES_USER: testuser
+      POSTGRES_PASSWORD: testpassword
+      POSTGRES_DB: exam_db_1
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_db1_data:/var/lib/postgresql/data
+    networks:
+      - exam_backend
+    restart: always
+
+  postgres_db2:
+    init: true
+    image: postgres:latest
+    container_name: nestjs_exam_postgres_db2
+    environment:
+      POSTGRES_USER: testuser
+      POSTGRES_PASSWORD: testpassword
+      POSTGRES_DB: exam_db_2
+    ports:
+      - '5433:5432'
+    volumes:
+      - postgres_db2_data:/var/lib/postgresql/data
+    networks:
+      - exam_backend
+    restart: always
+
+  redis:
+    init: true
+    image: redis:alpine
+    container_name: nestjs_exam_redis
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    networks:
+      - exam_backend
+    restart: always
+
+  mongodb:
+    init: true
+    image: mongo:latest
+    container_name: nestjs_exam_mongo
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - exam_backend
+    restart: always
+
+volumes:
+  postgres_db1_data:
+  postgres_db2_data:
+  redis_data:
+  mongo_data:
+
+networks:
+  exam_backend:
+    name: exam_backend
+    external: true
